@@ -1,0 +1,417 @@
+{
+  "name": "Nivel 6: Proyecto Final Integrador",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        -80
+      ],
+      "id": "721a095f-f8df-450c-a2b8-532eb400ff4e",
+      "name": "Webhook",
+      "webhookId": "ed86a010-dfd7-4350-b518-43d7713879ec"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Sos un asistente de clasificación de leads comerciales.\n\nTu tarea es analizar el mensaje de un posible cliente y clasificarlo en UNA de estas categorías:\n\n- hot → el cliente muestra intención clara e inmediata de compra\n- warm → el cliente está interesado pero sin urgencia\n- cold → el cliente solo realiza una consulta o no muestra intención de compra\n\nCriterios:\n\nHOT:\n- Quiere contratar, comprar o avanzar ahora\n- Expresa urgencia o decisión tomada\nEjemplos:\n\"quiero contratar hoy\"\n\"necesito el servicio urgente\"\n\"pasame precio para empezar ya\"\n\nWARM:\n- Muestra interés pero está evaluando\nEjemplos:\n\"me interesa el servicio\"\n\"quiero saber más\"\n\"cómo funciona\"\n\nCOLD:\n- Consulta general sin intención de compra\nEjemplos:\n\"qué hacen\"\n\"información\"\n\"solo estoy averiguando\"\n\nInstrucciones:\n- Respondé SOLO con una palabra: hot, warm o cold\n- No expliques\n- No agregues texto adicional\n- No repitas el mensaje\n\nMensaje: {{$json.message}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3ecd3d95-cd5c-4353-8bae-2f101eb7b0a1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3:latest",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        288,
+        208
+      ],
+      "id": "ddd83c22-e76a-424c-aa2e-1cf19610cf57",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "937bJ1qKzru4mLxf",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2ecd8796-d30e-4787-adfb-a7fd228e6551",
+              "leftValue": "={{ $json.body.message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bb482bea-b6d1-4a3e-9867-b18f5d6ea79b",
+              "leftValue": "message",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        -80
+      ],
+      "id": "47509893-2786-40db-9419-681d6cc0e3b4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2ba28776-e28c-4040-83f5-503ee8eaae40",
+              "name": "id",
+              "value": "={{ $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "1da995ab-8dd7-4911-b83e-96d366f20679",
+              "name": "mensaje",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "d7e08d52-d8b1-4022-b8de-823e24a0d3fd",
+              "name": "timestamp",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f11ce9d8-a289-465b-92c9-690ab5f24ea3",
+      "name": "Normalizacion"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        -192
+      ],
+      "id": "f09457b4-2a55-4f21-91f2-9f5752800208",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2ba28776-e28c-4040-83f5-503ee8eaae40",
+              "name": "error",
+              "value": "El campo 'message' no existe o esta vacio.",
+              "type": "string"
+            },
+            {
+              "id": "1da995ab-8dd7-4911-b83e-96d366f20679",
+              "name": "status",
+              "value": "=error",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        -192
+      ],
+      "id": "4b416d41-3bdd-4670-84bc-a0f0a143c01b",
+      "name": "MensajeError"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b02da38f-d010-4dbd-aef6-bb080490cc8c",
+              "name": "id",
+              "value": "={{$node[\"Normalizacion\"].json[\"id\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "32261566-4c1f-4234-a693-2a25245c1ec9",
+              "name": "message",
+              "value": "={{$node[\"Normalizacion\"].json[\"mensaje\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "cd41b815-af08-43e8-bd30-1f97fbdd78c0",
+              "name": "categoria",
+              "value": "={{$json.output.toLowerCase().includes(\"hot\") ? \"hot\" : $json.output.toLowerCase().includes(\"warm\") ? \"warm\" : \"cold\"}}",
+              "type": "string"
+            },
+            {
+              "id": "500aebcf-91b7-4d0d-bfcc-2538baaf7f44",
+              "name": "timestamp",
+              "value": "={{$node[\"Normalizacion\"].json[\"timestamp\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        0
+      ],
+      "id": "6fb4b63a-370a-4743-8a02-49ba0b51d269",
+      "name": "Integracion"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3f60218f-2889-4e0a-bf47-d3895e14208d",
+              "name": "prioridad",
+              "value": "={{ $json.categoria === \"hot\" ? 1 :\n      $json.categoria === \"warm\" ? 2 :\n          3}}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "5be9b14f-513f-4612-a276-8af64ef2897f",
+      "name": "Prioridad"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1584,
+        0
+      ],
+      "id": "80a1a6c2-ebd4-49cd-af4b-54c6816da092",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85b73c77-5f30-4d50-8296-759146fe561c",
+              "name": "categoria",
+              "value": "={{ $json.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "25c863af-2333-4e9c-81d4-f6c2965a3ced",
+              "name": "prioridad",
+              "value": "={{ $json.prioridad }}",
+              "type": "number"
+            },
+            {
+              "id": "0255221c-bd7f-4029-8ea0-cfd299a7ad9b",
+              "name": "status",
+              "value": "ok",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "0348fecd-3430-468b-98d2-ccb43a9c9f1e",
+      "name": "Mensaje de respuesta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "MensajeError",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalizacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizacion": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MensajeError": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Integracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Integracion": {
+      "main": [
+        [
+          {
+            "node": "Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje de respuesta": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1b65233d-d5ed-4758-a15c-d75fb095c94e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2d334375f95f4ca1afcde72742f2a97b116fd361061a9e85f3fcc5db0a47771"
+  },
+  "id": "VSkYMaa51rTMV7PP",
+  "tags": []
+}
